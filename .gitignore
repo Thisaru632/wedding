@@ -1,0 +1,13 @@
+# Operating System Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# Python Cache & Temp Files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Extracted temporary frames
+video_frames/

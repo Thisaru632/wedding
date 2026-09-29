@@ -106,8 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Show story video reel
     storyOverlay.classList.add('active');
 
-    // 4. Play video
+    // 4. Play video (muted background voice, preserving ambient wedding soundtrack)
     if (storyVideo) {
+      storyVideo.muted = true;
+      storyVideo.volume = 0;
       storyVideo.currentTime = 0;
       storyVideo.play().catch(e => console.log('Video play caught:', e));
     }
@@ -248,6 +250,24 @@ document.addEventListener('DOMContentLoaded', () => {
     rsvpForm.addEventListener('submit', (e) => {
       e.preventDefault();
       submittedGuestName = document.getElementById('guest-name').value.trim() || 'Thisaru Dilhara';
+      const guestMessage = document.getElementById('guest-message') ? document.getElementById('guest-message').value.trim() : '';
+
+      // Save submission to localStorage for Admin Panel
+      try {
+        const newRsvp = {
+          id: 'rsvp_' + Date.now(),
+          name: submittedGuestName,
+          attendance: attendanceStatus,
+          guests: attendanceStatus === 'accept' ? guestCount : 0,
+          message: guestMessage,
+          timestamp: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+        };
+        const currentList = JSON.parse(localStorage.getItem('wedding_rsvp_submissions') || '[]');
+        currentList.unshift(newRsvp);
+        localStorage.setItem('wedding_rsvp_submissions', JSON.stringify(currentList));
+      } catch (err) {
+        console.error('Storage error:', err);
+      }
 
       triggerPetalBurst(80);
 

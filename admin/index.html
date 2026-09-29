@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Admin Panel - RSVP Messages &amp; Responses | Sachini &amp; Sachin</title>
+  <meta name="description" content="Wedding Admin Panel. View sent guest messages and RSVP responses in a table.">
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💍</text></svg>">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Shared Style -->
+  <link rel="stylesheet" href="../style.css">
+
+  <style>
+    :root {
+      --admin-bg: #f9f6f0;
+      --admin-card-bg: #ffffff;
+      --admin-accent-gold: #c59b48;
+      --admin-maroon: #751b2c;
+      --admin-green: #2d6a4f;
+      --admin-text-dark: #2c2523;
+      --admin-text-muted: #796e65;
+    }
+
+    body.admin-body {
+      background: var(--admin-bg);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(197, 155, 72, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(117, 27, 44, 0.05) 0%, transparent 40%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px 20px 60px;
+      font-family: var(--font-sans);
+      color: var(--admin-text-dark);
+      display: flex;
+      justify-content: center;
+    }
+
+    .admin-container {
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    /* Admin Header */
+    .admin-header {
+      text-align: center;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .admin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      background: rgba(117, 27, 44, 0.08);
+      border: 1px solid rgba(117, 27, 44, 0.2);
+      color: var(--admin-maroon);
+      font-family: var(--font-cinzel);
+      font-size: 11px;
+      letter-spacing: 2px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .admin-title {
+      font-family: var(--font-cinzel);
+      font-size: 26px;
+      color: var(--admin-maroon);
+      letter-spacing: 2px;
+      margin: 0 0 6px 0;
+    }
+
+    .admin-subtitle {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 15px;
+      color: var(--admin-text-muted);
+      margin: 0 0 16px 0;
+    }
+
+    .admin-nav-bar {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .btn-admin-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: 20px;
+      background: #ffffff;
+      border: 1px solid rgba(197, 155, 72, 0.4);
+      color: var(--admin-maroon);
+      font-family: var(--font-cinzel);
+      font-size: 11px;
+      letter-spacing: 1px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      cursor: pointer;
+    }
+
+    .btn-admin-link:hover {
+      background: var(--admin-maroon);
+      color: #ffffff;
+      border-color: var(--admin-maroon);
+    }
+
+    /* Count Displaying Section (Stats Grid) */
+    .admin-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 680px) {
+      .admin-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px 12px;
+      text-align: center;
+      border: 1px solid rgba(197, 155, 72, 0.3);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+    }
+
+    .stat-val {
+      font-family: var(--font-serif);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--admin-maroon);
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    .stat-val.attending-count {
+      color: var(--admin-green);
+    }
+
+    .stat-label {
+      font-family: var(--font-cinzel);
+      font-size: 9.5px;
+      letter-spacing: 1px;
+      font-weight: 600;
+      color: var(--admin-text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Section Header */
+    .admin-section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 24px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(197, 155, 72, 0.3);
+    }
+
+    .section-title-text {
+      font-family: var(--font-cinzel);
+      font-size: 15px;
+      letter-spacing: 1.5px;
+      color: var(--admin-maroon);
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .admin-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-action-small {
+      padding: 6px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(197, 155, 72, 0.4);
+      background: #ffffff;
+      color: var(--admin-text-dark);
+      font-family: var(--font-cinzel);
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-action-small:hover {
+      background: var(--admin-maroon);
+      color: #ffffff;
+      border-color: var(--admin-maroon);
+    }
+
+    /* Table Container */
+    .table-card-wrapper {
+      background: #ffffff;
+      border-radius: 14px;
+      border: 1px solid rgba(197, 155, 72, 0.35);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+      overflow: hidden;
+      margin-bottom: 30px;
+    }
+
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .rsvp-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13.5px;
+      min-width: 760px;
+    }
+
+    .rsvp-table thead th {
+      background: #751b2c;
+      color: #ffffff;
+      font-family: var(--font-cinzel);
+      font-size: 11px;
+      letter-spacing: 1.2px;
+      font-weight: 600;
+      padding: 14px 16px;
+      border: none;
+      white-space: nowrap;
+    }
+
+    .rsvp-table thead th:first-child {
+      text-align: center;
+      width: 45px;
+    }
+
+    .rsvp-table thead th:last-child {
+      text-align: center;
+      width: 80px;
+    }
+
+    .rsvp-table tbody tr {
+      border-bottom: 1px solid rgba(197, 155, 72, 0.2);
+      transition: background 0.15s ease;
+    }
+
+    .rsvp-table tbody tr:nth-child(even) {
+      background: #fdfbf7;
+    }
+
+    .rsvp-table tbody tr:hover {
+      background: rgba(197, 155, 72, 0.08);
+    }
+
+    .rsvp-table tbody td {
+      padding: 14px 16px;
+      vertical-align: middle;
+      color: var(--admin-text-dark);
+    }
+
+    .td-num {
+      text-align: center;
+      font-family: var(--font-cinzel);
+      font-weight: 600;
+      color: var(--admin-text-muted);
+      font-size: 12px;
+    }
+
+    .td-name {
+      font-family: var(--font-serif);
+      font-size: 15.5px;
+      font-weight: 700;
+      color: var(--admin-maroon);
+      white-space: nowrap;
+    }
+
+    .td-guests {
+      font-weight: 600;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .td-message {
+      font-size: 13px;
+      font-style: italic;
+      color: #4a4039;
+      line-height: 1.4;
+      max-width: 320px;
+      word-break: break-word;
+    }
+
+    .td-message.empty-msg {
+      color: #b0a498;
+      font-style: normal;
+    }
+
+    .td-time {
+      font-size: 11.5px;
+      color: var(--admin-text-muted);
+      white-space: nowrap;
+    }
+
+    .attendance-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-family: var(--font-cinzel);
+      font-size: 9.5px;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+
+    .badge-accept {
+      background: rgba(45, 106, 79, 0.12);
+      border: 1px solid rgba(45, 106, 79, 0.3);
+      color: var(--admin-green);
+    }
+
+    .badge-decline {
+      background: rgba(117, 27, 44, 0.1);
+      border: 1px solid rgba(117, 27, 44, 0.3);
+      color: var(--admin-maroon);
+    }
+
+    .btn-delete-entry {
+      background: none;
+      border: 1px solid rgba(158, 42, 43, 0.3);
+      color: #9e2a2b;
+      cursor: pointer;
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-delete-entry:hover {
+      background: #9e2a2b;
+      color: #ffffff;
+      border-color: #9e2a2b;
+    }
+
+    .table-empty-row td {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--admin-text-muted);
+    }
+
+    .table-empty-row .empty-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    /* Toast Notification */
+    .toast-notice {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--admin-maroon);
+      color: #ffffff;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-family: var(--font-cinzel);
+      font-size: 12px;
+      letter-spacing: 1px;
+      font-weight: 600;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .toast-notice.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body class="admin-body">
+
+  <div class="admin-container">
+
+    <!-- Header -->
+    <header class="admin-header">
+      <div class="admin-badge">
+        <span>✦</span>
+        <span>ADMINISTRATION PORTAL</span>
+        <span>✦</span>
+      </div>
+      <h1 class="admin-title">Guest RSVP &amp; Wishes</h1>
+      <p class="admin-subtitle">The Wedding of Sachini &amp; Sachin — Messages from Invitation</p>
+      
+      <div class="admin-nav-bar">
+        <a href="../index.html" class="btn-admin-link">
+          <span>💍</span>
+          <span>View Guest Invitation</span>
+        </a>
+        <button type="button" class="btn-admin-link" id="btn-refresh-data">
+          <span>🔄</span>
+          <span>Sync Data</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Count Displaying Section -->
+    <div class="admin-stats-grid">
+      <div class="stat-card">
+        <div class="stat-val" id="stat-total-responses">0</div>
+        <div class="stat-label">Total Responses</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val attending-count" id="stat-joyfully-accept">0</div>
+        <div class="stat-label">Joyfully Accept</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-regretfully-decline">0</div>
+        <div class="stat-label">Declined</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val attending-count" id="stat-total-guests">0</div>
+        <div class="stat-label">Total Guests</div>
+      </div>
+    </div>
+
+
+    <!-- ================= SENDED MESSAGES TABLE ================= -->
+    <div class="admin-section-heading">
+      <h2 class="section-title-text">
+        <span>📋</span>
+        <span>Messages Sent from Invitation</span>
+      </h2>
+      <div class="admin-actions">
+        <button type="button" class="btn-action-small" id="btn-export-csv" title="Export guest list to CSV">
+          <span>📥</span>
+          <span>Export CSV</span>
+        </button>
+        <button type="button" class="btn-action-small" id="btn-clear-all" title="Clear all responses">
+          <span>🗑️</span>
+          <span>Clear All</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Table Responsive Wrapper -->
+    <div class="table-card-wrapper">
+      <div class="table-responsive">
+        <table class="rsvp-table" id="rsvp-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Full Name</th>
+              <th>Status</th>
+              <th style="text-align: center;">Guests</th>
+              <th>Wishes &amp; Message</th>
+              <th>Sent Time</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="rsvp-table-body">
+            <!-- Dynamically populated by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast Notice -->
+  <div class="toast-notice" id="toast-notice">Action Successful</div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const STORAGE_KEY = 'wedding_rsvp_submissions';
+
+      // DOM Elements
+      const tableBodyEl = document.getElementById('rsvp-table-body');
+      const statTotalEl = document.getElementById('stat-total-responses');
+      const statAcceptEl = document.getElementById('stat-joyfully-accept');
+      const statDeclineEl = document.getElementById('stat-regretfully-decline');
+      const statGuestsEl = document.getElementById('stat-total-guests');
+
+      const btnExportCsv = document.getElementById('btn-export-csv');
+      const btnClearAll = document.getElementById('btn-clear-all');
+      const btnRefresh = document.getElementById('btn-refresh-data');
+      const toastEl = document.getElementById('toast-notice');
+
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        setTimeout(() => toastEl.classList.remove('show'), 2400);
+      }
+
+      function getSubmissions() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            const initialData = [
+              {
+                id: 'rsvp_initial_1',
+                name: 'Thisaru Dilhara',
+                attendance: 'accept',
+                guests: 1,
+                message: 'Wishing Sachini & Sachin a lifetime of boundless love, happiness and prosperity! Suba Mangalam!',
+                timestamp: '29 Oct 2026, 11:30 AM'
+              }
+            ];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
+            return initialData;
+          }
+          return JSON.parse(raw);
+        } catch (e) {
+          console.error(e);
+          return [];
+        }
+      }
+
+      function saveSubmissions(list) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        render();
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function render() {
+        const list = getSubmissions();
+
+        // Calculate Counts
+        let total = list.length;
+        let acceptCount = 0;
+        let declineCount = 0;
+        let guestTotal = 0;
+
+        list.forEach(item => {
+          if (item.attendance === 'accept') {
+            acceptCount++;
+            guestTotal += Number(item.guests || 1);
+          } else {
+            declineCount++;
+          }
+        });
+
+        statTotalEl.textContent = total;
+        statAcceptEl.textContent = acceptCount;
+        statDeclineEl.textContent = declineCount;
+        statGuestsEl.textContent = guestTotal;
+
+        // Render Table Body
+        if (list.length === 0) {
+          tableBodyEl.innerHTML = `
+            <tr class="table-empty-row">
+              <td colspan="7">
+                <div class="empty-icon">💌</div>
+                <div><strong>No messages sent from invitation side yet.</strong></div>
+                <div style="font-size:12px; margin-top:4px;">When guests submit the RSVP form on the invitation, their messages will appear here.</div>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tableBodyEl.innerHTML = list.map((item, index) => {
+          const isAccept = item.attendance === 'accept';
+          const guestCountDisplay = isAccept ? (item.guests || 1) : 0;
+          const messageText = item.message 
+            ? `"${escapeHtml(item.message)}"` 
+            : `<span class="empty-msg">No message attached</span>`;
+
+          return `
+            <tr data-id="${item.id}">
+              <td class="td-num">${index + 1}</td>
+              <td class="td-name">${escapeHtml(item.name || 'Anonymous Guest')}</td>
+              <td>
+                <span class="attendance-badge ${isAccept ? 'badge-accept' : 'badge-decline'}">
+                  ${isAccept ? '✦ Joyfully Accept' : '✕ Declined'}
+                </span>
+              </td>
+              <td class="td-guests">${guestCountDisplay}</td>
+              <td class="td-message">${messageText}</td>
+              <td class="td-time">${escapeHtml(item.timestamp || 'Just now')}</td>
+              <td style="text-align: center;">
+                <button type="button" class="btn-delete-entry" data-del-id="${item.id}" title="Delete this entry">Delete</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        // Attach Delete Listeners
+        document.querySelectorAll('.btn-delete-entry').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = e.target.getAttribute('data-del-id');
+            const updated = getSubmissions().filter(item => item.id !== id);
+            saveSubmissions(updated);
+            showToast('Response deleted');
+          });
+        });
+      }
+
+      // Export to CSV
+      btnExportCsv.addEventListener('click', () => {
+        const list = getSubmissions();
+        if (list.length === 0) {
+          alert('No RSVP records to export.');
+          return;
+        }
+
+        let csv = 'No,Full Name,Attendance,Number of Guests,Wishes,Sent Time\n';
+        list.forEach((row, i) => {
+          const cleanName = `"${(row.name || '').replace(/"/g, '""')}"`;
+          const cleanAtt = row.attendance === 'accept' ? 'Joyfully Accept' : 'Regretfully Decline';
+          const cleanGuests = row.attendance === 'accept' ? (row.guests || 1) : 0;
+          const cleanWishes = `"${(row.message || '').replace(/"/g, '""')}"`;
+          const cleanDate = `"${(row.timestamp || '').replace(/"/g, '""')}"`;
+          csv += `${i + 1},${cleanName},${cleanAtt},${cleanGuests},${cleanWishes},${cleanDate}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Sachini_Sachin_Wedding_Messages_${Date.now()}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        showToast('CSV exported successfully!');
+      });
+
+      // Clear All
+      btnClearAll.addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear all sent messages?')) {
+          localStorage.removeItem(STORAGE_KEY);
+          render();
+          showToast('All records cleared.');
+        }
+      });
+
+      // Refresh Data
+      btnRefresh.addEventListener('click', () => {
+        render();
+        showToast('Data synchronized.');
+      });
+
+      // Initial Render
+      render();
+    });
+  </script>
+</body>
+</html>

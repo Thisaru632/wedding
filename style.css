@@ -2052,11 +2052,21 @@ body {
 }
 
 .btn-modal-close {
-  background: transparent;
-  border: 1px solid var(--color-text-light);
-  color: var(--color-text-dark);
-  padding: 10px;
+  background: var(--color-maroon);
+  border: 1px solid var(--color-maroon);
+  color: #fff;
+  padding: 12px 24px;
   border-radius: var(--radius-pill);
+  font-family: var(--font-cinzel);
   font-size: 12px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 4px 14px rgba(117, 27, 44, 0.25);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.btn-modal-close:hover {
+  transform: translateY(-2px);
+  background: #5c1421;
 }

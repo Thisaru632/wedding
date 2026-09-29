@@ -1,0 +1,25 @@
+{
+  "name": "wedding",
+  "version": "1.0.0",
+  "description": "> An elegant, interactive Sri Lankan Kandyan digital wedding invitation web experience.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Thisaru632/wedding.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Thisaru632/wedding/issues"
+  },
+  "homepage": "https://github.com/Thisaru632/wedding#readme",
+  "dependencies": {
+    "mongodb": "^7.7.0"
+  }
+}

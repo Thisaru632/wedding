@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const guestCountDisplay = document.getElementById('guest-count-display');
   const rsvpModal = document.getElementById('rsvp-modal');
   const rsvpModalMessage = document.getElementById('rsvp-modal-message');
-  const btnWhatsappShare = document.getElementById('btn-whatsapp-share');
   const btnModalClose = document.getElementById('btn-modal-close');
   
   // Calendar button
@@ -249,21 +248,40 @@ document.addEventListener('DOMContentLoaded', () => {
   if (rsvpForm) {
     rsvpForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      submittedGuestName = document.getElementById('guest-name').value.trim() || 'Thisaru Dilhara';
+      const guestNameInput = document.getElementById('guest-name');
+      submittedGuestName = guestNameInput ? guestNameInput.value.trim() : '';
+
+      if (!submittedGuestName) {
+        if (guestNameInput) guestNameInput.focus();
+        return;
+      }
+
       const guestMessage = document.getElementById('guest-message') ? document.getElementById('guest-message').value.trim() : '';
 
-      // Save submission to localStorage for Admin Panel
+      const rsvpPayload = {
+        name: submittedGuestName,
+        attendance: attendanceStatus,
+        guests: attendanceStatus === 'accept' ? guestCount : 0,
+        message: guestMessage,
+        timestamp: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+      };
+
+      // Save to MongoDB database via Vercel serverless API
+      if (window.location.protocol.startsWith('http')) {
+        fetch('/api/rsvps', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(rsvpPayload)
+        }).then(res => res.json())
+          .then(data => console.log('RSVP saved to MongoDB:', data))
+          .catch(err => console.error('MongoDB sync error:', err));
+      }
+
+      // Local fallback
       try {
-        const newRsvp = {
-          id: 'rsvp_' + Date.now(),
-          name: submittedGuestName,
-          attendance: attendanceStatus,
-          guests: attendanceStatus === 'accept' ? guestCount : 0,
-          message: guestMessage,
-          timestamp: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
-        };
+        const localEntry = { id: 'rsvp_' + Date.now(), ...rsvpPayload };
         const currentList = JSON.parse(localStorage.getItem('wedding_rsvp_submissions') || '[]');
-        currentList.unshift(newRsvp);
+        currentList.unshift(localEntry);
         localStorage.setItem('wedding_rsvp_submissions', JSON.stringify(currentList));
       } catch (err) {
         console.error('Storage error:', err);
@@ -273,25 +291,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Show modal
       if (attendanceStatus === 'accept') {
-        rsvpModalMessage.innerHTML = `Ayubowan <strong>${submittedGuestName}</strong>! We are overjoyed that you will be joining us with <strong>${guestCount} guest(s)</strong> on 29<sup>th</sup> October 2026 at Nature Lanka Hotel, Dehiattakandiya!`;
+        rsvpModalMessage.innerHTML = `Ayubowan <strong>${submittedGuestName}</strong>! Your RSVP has been confirmed. We are overjoyed that you will be joining us with <strong>${guestCount} guest(s)</strong> on 29<sup>th</sup> October 2026 at Nature Lanka Hotel, Dehiattakandiya!`;
       } else {
-        rsvpModalMessage.innerHTML = `Thank you <strong>${submittedGuestName}</strong> for letting us know. You will be warmly remembered in our thoughts!`;
+        rsvpModalMessage.innerHTML = `Thank you <strong>${submittedGuestName}</strong>. Your response has been recorded. You will be warmly remembered in our thoughts!`;
       }
       rsvpModal.classList.add('active');
-    });
-  }
 
-  // WhatsApp Share RSVP Direct to Sachin (0701021529)
-  if (btnWhatsappShare) {
-    btnWhatsappShare.addEventListener('click', () => {
-      let text = '';
-      if (attendanceStatus === 'accept') {
-        text = `*Wedding RSVP — Sachini & Sachin*%0A%0AHello Sachin & Sachini! This is *${submittedGuestName}*. I am delighted to confirm that I will be joyfully attending your wedding on *Thursday, 29th October 2026* at *Nature Lanka Hotel, Dehiattakandiya* with *${guestCount} guest(s)*!%0A%0ACongratulations & Suba Mangalam! 🥂💐`;
-      } else {
-        text = `*Wedding RSVP — Sachini & Sachin*%0A%0AHello Sachin & Sachini! This is *${submittedGuestName}*. Unfortunately, I won't be able to attend your wedding on 29th October 2026, but I send my warmest wishes and heartfelt blessings for a wonderful marriage! 💖`;
-      }
-      const whatsappUrl = `https://api.whatsapp.com/send?phone=94701021529&text=${text}`;
-      window.open(whatsappUrl, '_blank');
+      // Clear input fields
+      if (guestNameInput) guestNameInput.value = '';
+      const guestMsgInput = document.getElementById('guest-message');
+      if (guestMsgInput) guestMsgInput.value = '';
     });
   }
 

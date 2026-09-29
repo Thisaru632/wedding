@@ -11,3 +11,8 @@ __pycache__/
 
 # Extracted temporary frames
 video_frames/
+
+# Dependencies & Environment
+node_modules/
+.env
+.env.local

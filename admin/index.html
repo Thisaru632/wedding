@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Admin Panel - RSVP Messages &amp; Responses | Sachini &amp; Sachin</title>
-  <meta name="description" content="Wedding Admin Panel. View sent guest messages and RSVP responses in a table.">
+  <meta name="description" content="Wedding Admin Panel. View sent guest messages and RSVP responses in a table connected to MongoDB.">
 
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💍</text></svg>">
@@ -84,7 +84,22 @@
       font-style: italic;
       font-size: 15px;
       color: var(--admin-text-muted);
-      margin: 0 0 16px 0;
+      margin: 0 0 14px 0;
+    }
+
+    .db-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      background: #ffffff;
+      border: 1px solid rgba(45, 106, 79, 0.35);
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--admin-green);
+      margin-bottom: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
     }
 
     .admin-nav-bar {
@@ -416,6 +431,11 @@
       <h1 class="admin-title">Guest RSVP &amp; Wishes</h1>
       <p class="admin-subtitle">The Wedding of Sachini &amp; Sachin — Messages from Invitation</p>
       
+      <div class="db-status-pill" id="db-status-pill">
+        <span>🔄</span>
+        <span id="db-status-text">Connecting to MongoDB...</span>
+      </div>
+
       <div class="admin-nav-bar">
         <a href="../index.html" class="btn-admin-link">
           <span>💍</span>
@@ -497,6 +517,8 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const STORAGE_KEY = 'wedding_rsvp_submissions';
+      const isHttp = window.location.protocol.startsWith('http');
+      const API_URL = isHttp ? '/api/rsvps' : null;
 
       // DOM Elements
       const tableBodyEl = document.getElementById('rsvp-table-body');
@@ -504,11 +526,15 @@
       const statAcceptEl = document.getElementById('stat-joyfully-accept');
       const statDeclineEl = document.getElementById('stat-regretfully-decline');
       const statGuestsEl = document.getElementById('stat-total-guests');
+      const dbStatusPill = document.getElementById('db-status-pill');
+      const dbStatusText = document.getElementById('db-status-text');
 
       const btnExportCsv = document.getElementById('btn-export-csv');
       const btnClearAll = document.getElementById('btn-clear-all');
       const btnRefresh = document.getElementById('btn-refresh-data');
       const toastEl = document.getElementById('toast-notice');
+
+      let currentData = [];
 
       function showToast(msg) {
         toastEl.textContent = msg;
@@ -516,32 +542,45 @@
         setTimeout(() => toastEl.classList.remove('show'), 2400);
       }
 
-      function getSubmissions() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) {
-            const initialData = [
-              {
-                id: 'rsvp_initial_1',
-                name: 'Thisaru Dilhara',
-                attendance: 'accept',
-                guests: 1,
-                message: 'Wishing Sachini & Sachin a lifetime of boundless love, happiness and prosperity! Suba Mangalam!',
-                timestamp: '29 Oct 2026, 11:30 AM'
-              }
-            ];
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
-            return initialData;
-          }
-          return JSON.parse(raw);
-        } catch (e) {
-          console.error(e);
-          return [];
+      function updateStatus(isOnline, label) {
+        if (isOnline) {
+          dbStatusPill.style.borderColor = 'rgba(45, 106, 79, 0.4)';
+          dbStatusPill.style.color = 'var(--admin-green)';
+          dbStatusText.textContent = label || '🟢 MongoDB Connected (Live Cloud Database)';
+        } else {
+          dbStatusPill.style.borderColor = 'rgba(197, 155, 72, 0.4)';
+          dbStatusPill.style.color = '#796e65';
+          dbStatusText.textContent = label || '📁 Local Cache Mode (Deploy to Vercel for Live Cloud Sync)';
         }
       }
 
-      function saveSubmissions(list) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      // Fetch from MongoDB
+      async function fetchData() {
+        if (API_URL) {
+          try {
+            const res = await fetch(API_URL);
+            if (!res.ok) throw new Error('API status ' + res.status);
+            const data = await res.json();
+            currentData = data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            updateStatus(true, '🟢 MongoDB Connected (Live Cloud Database)');
+            render();
+            return;
+          } catch (err) {
+            console.warn('API error, reading local cache:', err);
+            updateStatus(false, '⚠️ Cloud Sync Reconnecting...');
+          }
+        } else {
+          updateStatus(false, '📁 Local File Mode (Open on Vercel URL to sync live MongoDB)');
+        }
+
+        // Fallback to local storage
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          currentData = raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          currentData = [];
+        }
         render();
       }
 
@@ -554,7 +593,7 @@
       }
 
       function render() {
-        const list = getSubmissions();
+        const list = currentData;
 
         // Calculate Counts
         let total = list.length;
@@ -618,10 +657,22 @@
 
         // Attach Delete Listeners
         document.querySelectorAll('.btn-delete-entry').forEach(btn => {
-          btn.addEventListener('click', (e) => {
+          btn.addEventListener('click', async (e) => {
             const id = e.target.getAttribute('data-del-id');
-            const updated = getSubmissions().filter(item => item.id !== id);
-            saveSubmissions(updated);
+            if (API_URL) {
+              try {
+                await fetch(API_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'delete', id: id })
+                });
+              } catch (err) {
+                console.error('Delete error:', err);
+              }
+            }
+            currentData = currentData.filter(item => item.id !== id);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentData));
+            render();
             showToast('Response deleted');
           });
         });
@@ -629,7 +680,7 @@
 
       // Export to CSV
       btnExportCsv.addEventListener('click', () => {
-        const list = getSubmissions();
+        const list = currentData;
         if (list.length === 0) {
           alert('No RSVP records to export.');
           return;
@@ -656,8 +707,20 @@
       });
 
       // Clear All
-      btnClearAll.addEventListener('click', () => {
-        if (confirm('Are you sure you want to clear all sent messages?')) {
+      btnClearAll.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to clear all sent messages from MongoDB?')) {
+          if (API_URL) {
+            try {
+              await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'clearAll' })
+              });
+            } catch (err) {
+              console.error('Clear error:', err);
+            }
+          }
+          currentData = [];
           localStorage.removeItem(STORAGE_KEY);
           render();
           showToast('All records cleared.');
@@ -666,12 +729,15 @@
 
       // Refresh Data
       btnRefresh.addEventListener('click', () => {
-        render();
-        showToast('Data synchronized.');
+        fetchData();
+        showToast('Data synchronized with MongoDB.');
       });
 
-      // Initial Render
-      render();
+      // Initial Fetch & Auto Poll every 15s when live
+      fetchData();
+      if (API_URL) {
+        setInterval(fetchData, 15000);
+      }
     });
   </script>
 </body>

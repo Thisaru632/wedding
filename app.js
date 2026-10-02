@@ -199,8 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const details = encodeURIComponent('Sri Suba Mangalam! Celebrating the marriage of Sachini & Sachin at Nature Lanka Hotel, Dehiattakandiya, Sri Lanka. Poruwa Ceremony at 9.40 AM. Contacts: Sachin (0701021529), Sachini (0704154704).');
       const location = encodeURIComponent('Nature Lanka Hotel, Dehiattakandiya, Eastern Province, Sri Lanka');
       
-      // Google Calendar link: Oct 29, 2026 09:00 to 17:00 SLT (UTC+5:30) -> 03:30 UTC to 11:30 UTC
-      const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=20261029T033000Z/20261029T113000Z&details=${details}&location=${location}`;
+      // Google Calendar link: Oct 29, 2026 09:00 to 16:30 SLT (UTC+5:30) -> 03:30 UTC to 11:00 UTC
+      const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=20261029T033000Z/20261029T110000Z&details=${details}&location=${location}`;
       
       window.open(gcalUrl, '_blank');
     });
